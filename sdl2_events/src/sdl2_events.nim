@@ -1,58 +1,66 @@
 import sdl2
 import os
 
+var
+  # Renderer color
+  purple: Color = (r: uint8 0x66, g: uint8 0x04, b: uint8 0x9b,
+      a: uint8 SDL_ALPHA_OPAQUE)
+  # Surface color
+  green: Color = (r: uint8 0x51, g: uint8 0xad, b: uint8 0x6a,
+      a: uint8 SDL_ALPHA_OPAQUE)
+  # Rectangle color
+  yellow: Color = (r: uint8 0xde, g: uint8 0xfc, b: uint8 0x8d,
+      a: uint8 SDL_ALPHA_OPAQUE)
+
+proc quitGame(window: WindowPtr): void =
+  window.destroy()
+  sdl2.quit()
+
 proc quitGame(renderer: RendererPtr, window: WindowPtr): void =
   renderer.destroy()
   window.destroy()
   sdl2.quit()
 
+proc quitGame(surface: SurfacePtr, window: WindowPtr): void =
+  surface.freeSurface()
+  window.destroy()
+  sdl2.quit()
 
 when isMainModule:
   var
     playing = true
+    window: WindowPtr = nil
+    screenSurface: SurfacePtr = nil
+    playerSurface: SurfacePtr = nil
 
-  sdl2.init(INIT_VIDEO)
-  let window = sdl2.createWindow(title = "Handling some events",
+  if sdl2.init(INIT_VIDEO) == SdlError:
+    stderr.writeLine("Error initializing sld2", getError())
+
+  # This is also creating a surface the same size as the window.
+  window = sdl2.createWindow(title = "Handling some events",
       x = SDL_WINDOWPOS_CENTERED, y = SDL_WINDOWPOS_CENTERED, w = 800, h = 600,
       flags = SDL_WINDOW_SHOWN)
   if isNil(window):
     stderr.writeLine("Error creating window ", getError())
 
+  screenSurface = sdl2.getSurface(window)
+  fillRect(screenSurface, nil, mapRGB(screenSurface.format, green.r, green.g, green.b))
+  discard updateSurface(window)
+
+  playerSurface = sdl2.loadBMP("./texture.bmp")
+  if isNil(playerSurface):
+    stderr.writeLine("Error loading player image ", getError())
+  # Render image on to back buffer  
+  sdl2.blitSurface(playerSurface, nil, screenSurface, nil)
+  # Update front buffer with back buffer
+  discard sdl2.updateSurface(window)
+
   # A renderer is not needed to use a surface but is good when hardware acceleration is needed
-  let renderer = sdl2.createRenderer(window, -1, Renderer_Accelerated)
-  if isNil(renderer):
-    stderr.writeLine("Error creating renderer ", getError())
+  # let renderer = sdl2.createRenderer(window, -1, Renderer_Accelerated)
+  # if isNil(renderer):
+  #   stderr.writeLine("Error creating renderer ", getError())
 
-  while playing:
-    var
-      rect: Rect
+  sdl2.delay(2000)
+  playing = false
 
-    let surface = createRGBSurface(flags = 0, width = 120, height = 120,
-        depth = 8, 0, 0, 0, 0)
-    if isNil(surface):
-      stderr.writeLine("Error creating surface ", getError())
-
-    rect.x = 0
-    rect.y = 0
-    rect.w = 100
-    rect.h = 100
-
-    let
-      srcRect = addr(rect)
-      dstRect = addr(rect)
-
-
-    # blitSurface(src = surface, srcrect = srcRect, dst = surface, dstRect = dstRect)
-    # discard updateSurface(window)
-
-    let texture = createTextureFromSurface(renderer, surface)
-    if isNil(texture):
-      stderr.writeLine("Error creating texture ", getError())
-
-    # copy(renderer, texture, nil, nil)
-    present(renderer)
-
-    sleep(2000)
-    playing = false
-
-  quitGame(renderer, window)
+  quitGame(playerSurface, window)
