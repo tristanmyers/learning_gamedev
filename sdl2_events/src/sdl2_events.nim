@@ -1,5 +1,6 @@
 import sdl2
 import os
+import std/options
 
 var
   # Renderer color
@@ -12,24 +13,19 @@ var
   yellow: Color = (r: uint8 0xde, g: uint8 0xfc, b: uint8 0x8d,
       a: uint8 SDL_ALPHA_OPAQUE)
 
-proc quitGame(window: WindowPtr): void =
-  window.destroy()
-  sdl2.quit()
+# I think having optional parameters is more appoproiate here than procedure overrides since there is not much logic difference 
+proc quitGame(window: Option[WindowPtr], renderer: Option[RendererPtr], surface: Option[SurfacePtr]): void = 
+  if surface.isSome(): sdl2.freeSurface(get(surface))
+  if renderer.isSome(): sdl2.destroy(get(renderer))
+  if window.isSome(): sdl2.destroy(get(window))
 
-proc quitGame(renderer: RendererPtr, window: WindowPtr): void =
-  renderer.destroy()
-  window.destroy()
-  sdl2.quit()
-
-proc quitGame(surface: SurfacePtr, window: WindowPtr): void =
-  surface.freeSurface()
-  window.destroy()
   sdl2.quit()
 
 when isMainModule:
   var
     playing = true
     window: WindowPtr = nil
+    renderer: RendererPtr = nil
     screenSurface: SurfacePtr = nil
     playerSurface: SurfacePtr = nil
 
@@ -47,7 +43,7 @@ when isMainModule:
   fillRect(screenSurface, nil, mapRGB(screenSurface.format, green.r, green.g, green.b))
   discard updateSurface(window)
 
-  playerSurface = sdl2.loadBMP("./texture.bmp")
+  playerSurface = sdl2.loadBMP("./player1.bmp")
   if isNil(playerSurface):
     stderr.writeLine("Error loading player image ", getError())
   # Render image on to back buffer  
@@ -63,4 +59,4 @@ when isMainModule:
   sdl2.delay(2000)
   playing = false
 
-  quitGame(playerSurface, window)
+  quitGame(surface = option(playerSurface), window = option(window), renderer = option(renderer))
