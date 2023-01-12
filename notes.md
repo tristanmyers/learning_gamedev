@@ -26,7 +26,8 @@ This will output a ``Event`` object, that can be used to find out the ``EventTyp
 > Frames?
 
 Each frame is an iteration of game loop, initialize -> update -> draw
-It is import that a game loop has a delay to reduce CPU usage. The delay time effects ticks per second.
+
+It is important that a game loop has a delay to reduce CPU usage. The delay time effects ticks per second.
 
 > When does one worry about thread management?
 > How do I manage threads?

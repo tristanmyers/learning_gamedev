@@ -39,23 +39,14 @@ when isMainModule:
   if isNil(window):
     stderr.writeLine("Error creating window ", getError())
 
-  screenSurface = sdl2.getSurface(window)
+  screenSurface = window.getSurface
   fillRect(screenSurface, nil, mapRGB(screenSurface.format, green.r, green.g, green.b))
   discard updateSurface(window)
-
-  # NOTE: Executable needs to be ran from the directory that the image is in.
-  playerSurface = sdl2.loadBMP("./player1.bmp")
-  if isNil(playerSurface):
-    stderr.writeLine("Error loading player image ", getError())
-  # Render image on to back buffer
-  sdl2.blitSurface(playerSurface, nil, screenSurface, nil)
-  # Update front buffer with back buffer
-  discard sdl2.updateSurface(window)
 
   while playing:
     # Without a delay the cpu would be at 100% while the game is running.
     sdl2.delay(5)
-    while sdl2.pollEvent(event):
+    while event.pollEvent:
       case event.kind
         of KeyDown:
           if event.key.keysym.scancode == SDL_SCANCODE_Q:
@@ -69,4 +60,19 @@ when isMainModule:
           playing = false
 
         else: discard
+
+    if playing: 
+      if isNil(playerSurface): 
+        stdout.writeLine("loaded image")
+        # NOTE: Executable needs to be ran from the directory that the image is in.
+        playerSurface = sdl2.loadBMP("./player1.bmp")
+        if isNil(playerSurface):
+          stderr.writeLine("Error loading player image ", getError())
+
+      # Render image on to back buffer
+      sdl2.blitSurface(playerSurface, nil, screenSurface, nil)
+      # Update front buffer with back buffer
+      if window.updateSurface == SdlError:
+        stderr.writeLine("Error updating surface ", getError())
+
 
