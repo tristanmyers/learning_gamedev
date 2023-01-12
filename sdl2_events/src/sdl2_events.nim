@@ -41,7 +41,7 @@ when isMainModule:
 
   screenSurface = window.getSurface
   fillRect(screenSurface, nil, mapRGB(screenSurface.format, green.r, green.g, green.b))
-  discard updateSurface(window)
+  discard window.updateSurface
 
   while playing:
     # Without a delay the cpu would be at 100% while the game is running.
@@ -61,8 +61,8 @@ when isMainModule:
 
         else: discard
 
-    if playing: 
-      if isNil(playerSurface): 
+    if playing:
+      if isNil(playerSurface):
         stdout.writeLine("loaded image")
         # NOTE: Executable needs to be ran from the directory that the image is in.
         playerSurface = sdl2.loadBMP("./player1.bmp")

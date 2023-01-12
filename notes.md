@@ -15,7 +15,9 @@ Creating a window also creates a surface the size of the window.
 
 I can load an image(bmp) with ``loadBMP``, this will create a surface.
 
-Once we have the image, just blit that image surface on to the window surface.
+Once we have the image, just blit that image surface on to the window surface. Which adds the image to the back buffer, this is not seen on the screen.
+
+Next, update the front buffer with the back buffer with ``updateSurface``
 
 > How do I get user input?
 
