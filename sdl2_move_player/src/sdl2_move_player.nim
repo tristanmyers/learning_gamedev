@@ -11,28 +11,33 @@ var
   yellow: Color = (r: uint8 0xde, g: uint8 0xfc, b: uint8 0x8d,
       a: uint8 SDL_ALPHA_OPAQUE)
 
+proc logError(msg: string): void = stderr.writeLine(msg, sdl2.getError())
+
 proc initGame(window: var WindowPtr, renderer: var RendererPtr,
     screenSurface: var SurfacePtr): void =
   if sdl2.init(INIT_VIDEO) == SdlError:
-    stderr.writeLine("Error initializing sld2", getError())
+    logError("Error intializing sdl2 ")
 
   # This is also creating a surface the same size as the window.
   window = sdl2.createWindow(title = "Handling some events",
       x = SDL_WINDOWPOS_CENTERED, y = SDL_WINDOWPOS_CENTERED, w = 800, h = 600,
       flags = SDL_WINDOW_SHOWN)
   if isNil(window):
-    stderr.writeLine("Error creating window ", getError())
+    logError("Error creating window ")
 
   renderer = sdl2.createRenderer(window, cint -1, Renderer_Accelerated)
+  if isNil(renderer): logError("Error creating renderer ")
 
   screenSurface = window.getSurface
-  fillRect(screenSurface, nil, mapRGB(screenSurface.format, green.r, green.g, green.b))
+  let surfaceFill = fillRect(screenSurface, nil, mapRGB(screenSurface.format, green.r, green.g, green.b))
+  if surfaceFill == SdlError: logError("Error filling surface rect ")
   discard window.updateSurface
 
-# NOTE: Maybe window and renderer doesn't need to be passed through as params
+# NOTE: Maybe window and renderer doesn't need to be passed through as params, they maybe me something like getWindow
 # I think having optional parameters is more appoproiate here than procedure overrides since there is not much logic difference
 proc quitGame(window: Option[WindowPtr], renderer: Option[RendererPtr],
-    surface: Option[SurfacePtr]): void =
+    surface: Option[SurfacePtr], texture: Option[TexturePtr]): void =
+  if texture.isSome(): sdl2.destroy(get(texture))
   if surface.isSome(): sdl2.freeSurface(get(surface))
   if renderer.isSome(): sdl2.destroy(get(renderer))
   if window.isSome(): sdl2.destroy(get(window))
@@ -43,7 +48,7 @@ proc quitGame(window: Option[WindowPtr], renderer: Option[RendererPtr],
 proc handleEvents(event: var Event, playerSurface: var SurfacePtr,
                   playerTexture: var TexturePtr, window: var WindowPtr, renderer: var RendererPtr, playing: var bool, playersPrevPos: var Position): void =
 
-  if isNil(playerTexture): playerTexture = sdl2.createTextureFromSurface(renderer, playerSurface)
+  # if isNil(playerTexture): playerTexture = sdl2.createTextureFromSurface(renderer, playerSurface)
 
   while event.pollEvent:
     case event.kind
@@ -52,7 +57,7 @@ proc handleEvents(event: var Event, playerSurface: var SurfacePtr,
 
         if scancode == SDL_SCANCODE_Q:
           quitGame(surface = option(playerSurface), window = option(window),
-                          renderer = option(renderer))
+                          renderer = option(renderer), texture = option(playerTexture))
           playing = false
 
         if scancode == SDL_SCANCODE_D:
@@ -67,7 +72,7 @@ proc handleEvents(event: var Event, playerSurface: var SurfacePtr,
 
       of QuitEvent:
         quitGame(surface = option(playerSurface), window = option(window),
-                        renderer = option(renderer))
+                 renderer = option(renderer), texture = option(playerTexture))
         playing = false
 
       else: discard
@@ -99,13 +104,12 @@ when isMainModule:
         # NOTE: Executable needs to be ran from the directory that the image is in.
         playerSurface = sdl2.loadBMP("./player1.bmp")
         if isNil(playerSurface):
-          stderr.writeLine("Error loading player image ", getError())
-
+          logError("Error loading player image ")
         # Render image on to back buffer
-        sdl2.blitSurface(playerSurface, nil, screenSurface, nil)
+        # sdl2.blitSurface(playerSurface, nil, screenSurface, nil)
         # Update front buffer with back buffer
-        if window.updateSurface == SdlError:
-          stderr.writeLine("Error updating surface ", getError())
+        # if window.updateSurface == SdlError:
+          # logError("Error updating surface ")
 
-    renderer.present
+      renderer.present
 
