@@ -1,7 +1,7 @@
 import sdl2
 import std/options
 
-type Position = tuple[x, y: cint]
+type Position = tuple[x, y: int]
 
 var
   purple: Color = (r: uint8 0x66, g: uint8 0x04, b: uint8 0x9b,
@@ -60,7 +60,7 @@ proc handleEvents(event: var Event, playerSurface: var SurfacePtr,
           playersPrevPos.y += 10
 
           var
-            rect: Rect = (playersPrevPos.x, playersPrevPos.y, playerSurface.w, playerSurface.h)
+            rect: Rect = (cint playersPrevPos.x, cint playersPrevPos.y, playerSurface.w, playerSurface.h)
             destRect = addr(rect)
             
           renderer.copy(playerTexture, nil, destRect)
@@ -83,7 +83,7 @@ when isMainModule:
     playerSurface: SurfacePtr = nil
     playerTexture: TexturePtr = nil
     event: Event
-    playersPrevPos: Position = (cint 0, cint 0)
+    playersPrevPos: Position = (0, 0)
 
   initGame(window, renderer, screenSurface)
   renderer.clear
