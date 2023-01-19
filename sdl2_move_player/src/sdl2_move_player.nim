@@ -24,14 +24,15 @@ proc initGame(window: var WindowPtr, renderer: var RendererPtr,
       flags = SDL_WINDOW_SHOWN)
   if isNil(window):
     logError("Error creating window ")
-
-  renderer = sdl2.createRenderer(window, cint -1, Renderer_Accelerated)
+   
+  renderer = window.createRenderer(cint -1, Renderer_Accelerated)
   if isNil(renderer): logError("Error creating renderer ")
 
-  screenSurface = window.getSurface
-  let surfaceFill = fillRect(screenSurface, nil, mapRGB(screenSurface.format, green.r, green.g, green.b))
-  if surfaceFill == SdlError: logError("Error filling surface rect ")
-  discard window.updateSurface
+  # TODO: My surface color is broken
+  # screenSurface = window.getSurface
+  # let surfaceFill = screenSurface.fillRect(nil, mapRGB(screenSurface.format, green.r, green.g, green.b))
+  # if surfaceFill == SdlError: logError("Error filling surface rect ")
+  # if window.updateSurface == SdlError: logError("Error updating screen surface ")
 
 # NOTE: Maybe window and renderer doesn't need to be passed through as params, they maybe me something like getWindow
 # I think having optional parameters is more appoproiate here than procedure overrides since there is not much logic difference
@@ -48,7 +49,7 @@ proc quitGame(window: Option[WindowPtr], renderer: Option[RendererPtr],
 proc handleEvents(event: var Event, playerSurface: var SurfacePtr,
                   playerTexture: var TexturePtr, window: var WindowPtr, renderer: var RendererPtr, playing: var bool, playersPrevPos: var Position): void =
 
-  # if isNil(playerTexture): playerTexture = sdl2.createTextureFromSurface(renderer, playerSurface)
+  if isNil(playerTexture): playerTexture = sdl2.createTextureFromSurface(renderer, playerSurface)
 
   while event.pollEvent:
     case event.kind
@@ -100,16 +101,15 @@ when isMainModule:
 
     if playing:
       if isNil(playerSurface):
-        stdout.writeLine("loaded image")
         # NOTE: Executable needs to be ran from the directory that the image is in.
         playerSurface = sdl2.loadBMP("./player1.bmp")
         if isNil(playerSurface):
           logError("Error loading player image ")
         # Render image on to back buffer
-        # sdl2.blitSurface(playerSurface, nil, screenSurface, nil)
+        playerSurface.blitSurface(nil, screenSurface, nil)
         # Update front buffer with back buffer
         # if window.updateSurface == SdlError:
-          # logError("Error updating surface ")
+        #   logError("Error updating surface ")
 
       renderer.present
 
