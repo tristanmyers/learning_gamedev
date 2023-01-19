@@ -31,5 +31,9 @@ Each frame is an iteration of game loop, initialize -> update -> draw
 
 It is important that a game loop has a delay to reduce CPU usage. The delay time effects ticks per second.
 
+> What steps does moving the player require?
+
 > When does one worry about thread management?
+
 > How do I manage threads?
+
