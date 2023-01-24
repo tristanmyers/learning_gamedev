@@ -13,8 +13,7 @@ var
 
 proc logError(msg: string): void = stderr.writeLine(msg, sdl2.getError())
 
-proc initGame(window: var WindowPtr, renderer: var RendererPtr,
-    screenSurface: var SurfacePtr): void =
+proc initGame(window: var WindowPtr, renderer: var RendererPtr): void =
   if sdl2.init(INIT_VIDEO) == SdlError:
     logError("Error intializing sdl2 ")
 
@@ -24,21 +23,21 @@ proc initGame(window: var WindowPtr, renderer: var RendererPtr,
       flags = SDL_WINDOW_SHOWN)
   if isNil(window):
     logError("Error creating window ")
-   
+
   renderer = window.createRenderer(cint -1, Renderer_Accelerated)
   if isNil(renderer): logError("Error creating renderer ")
 
   # TODO: My surface color is broken
-  # screenSurface = window.getSurface
-  # let surfaceFill = screenSurface.fillRect(nil, mapRGB(screenSurface.format, green.r, green.g, green.b))
-  # if surfaceFill == SdlError: logError("Error filling surface rect ")
-  # if window.updateSurface == SdlError: logError("Error updating screen surface ")
+  let screenSurface = window.getSurface
+  let surfaceFill = screenSurface.fillRect(nil, mapRGB(screenSurface.format,
+      green.r, green.g, green.b))
+  if surfaceFill == SdlError: logError("Error filling surface rect ")
+  if window.updateSurface == SdlError: logError("Error updating screen surface ")
 
 # NOTE: Maybe window and renderer doesn't need to be passed through as params, they maybe me something like getWindow
 # I think having optional parameters is more appoproiate here than procedure overrides since there is not much logic difference
 proc quitGame(window: Option[WindowPtr], renderer: Option[RendererPtr],
-    surface: Option[SurfacePtr], texture: Option[TexturePtr]): void =
-  if texture.isSome(): sdl2.destroy(get(texture))
+    surface: Option[SurfacePtr]): void =
   if surface.isSome(): sdl2.freeSurface(get(surface))
   if renderer.isSome(): sdl2.destroy(get(renderer))
   if window.isSome(): sdl2.destroy(get(window))
@@ -47,9 +46,8 @@ proc quitGame(window: Option[WindowPtr], renderer: Option[RendererPtr],
 
 # TODO: Is there a better way to set these parameters?
 proc handleEvents(event: var Event, playerSurface: var SurfacePtr,
-                  playerTexture: var TexturePtr, window: var WindowPtr, renderer: var RendererPtr, playing: var bool, playersPrevPos: var Position): void =
-
-  if isNil(playerTexture): playerTexture = sdl2.createTextureFromSurface(renderer, playerSurface)
+                   window: var WindowPtr, renderer: var RendererPtr,
+                       playing: var bool, playersPrevPos: var Position): void =
 
   while event.pollEvent:
     case event.kind
@@ -58,7 +56,7 @@ proc handleEvents(event: var Event, playerSurface: var SurfacePtr,
 
         if scancode == SDL_SCANCODE_Q:
           quitGame(surface = option(playerSurface), window = option(window),
-                          renderer = option(renderer), texture = option(playerTexture))
+                          renderer = option(renderer))
           playing = false
 
         if scancode == SDL_SCANCODE_D:
@@ -66,14 +64,16 @@ proc handleEvents(event: var Event, playerSurface: var SurfacePtr,
           playersPrevPos.y += 10
 
           var
-            rect: Rect = (cint playersPrevPos.x, cint playersPrevPos.y, playerSurface.w, playerSurface.h)
+            rect: Rect = (cint playersPrevPos.x, cint playersPrevPos.y,
+                playerSurface.w, playerSurface.h)
             destRect = addr(rect)
-            
-          renderer.copy(playerTexture, nil, destRect)
+
+          # Update the surface with the players new position
+          playerSurface.blitSurface(nil, window.getSurface, destRect)
 
       of QuitEvent:
         quitGame(surface = option(playerSurface), window = option(window),
-                 renderer = option(renderer), texture = option(playerTexture))
+                 renderer = option(renderer))
         playing = false
 
       else: discard
@@ -87,17 +87,17 @@ when isMainModule:
     renderer: RendererPtr = nil
     screenSurface: SurfacePtr = nil
     playerSurface: SurfacePtr = nil
-    playerTexture: TexturePtr = nil
     event: Event
     playersPrevPos: Position = (0, 0)
 
-  initGame(window, renderer, screenSurface)
+  initGame(window, renderer)
   renderer.clear
 
   while playing:
     # Without a delay the cpu would be at 100% while the game is running.
     sdl2.delay(5)
-    handleEvents(event, playerSurface, playerTexture, window, renderer, playing, playersPrevPos)
+    # screenSurface.fillRect(nil, 0x000000)
+    handleEvents(event, playerSurface, window, renderer, playing, playersPrevPos)
 
     if playing:
       if isNil(playerSurface):
@@ -107,9 +107,8 @@ when isMainModule:
           logError("Error loading player image ")
         # Render image on to back buffer
         playerSurface.blitSurface(nil, screenSurface, nil)
-        # Update front buffer with back buffer
-        # if window.updateSurface == SdlError:
-        #   logError("Error updating surface ")
 
-      renderer.present
+    # Update front buffer with back buffer
+    if window.updateSurface == SdlError:
+      logError("Error updating surface ")
 
