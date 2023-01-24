@@ -33,11 +33,11 @@ It is important that a game loop has a delay to reduce CPU usage. The delay time
 
 > What steps does moving the player require?
 
-Create a ``Rect`` that symbolises the players in it's new position. You will need the players previous coordinates, so make a mutable variable that holds that info. 
+Create a ``Rect`` that symbolises the player in it's new position. You will need the players previous coordinates, so make a mutable variable that holds that info. 
 
 Make sure to update the previous coordinates and use those new coordinates in the ``Rect``.
 
-Then blit the window surface with the new the ``Rect`` that has the updated coordinates.
+Then blit the window surface with the new ``Rect`` that has the updated coordinates.
 
 Before all of this you will need to reset the screen surface so that the player at the old coordinates doesn't stay on the screen. 
 
