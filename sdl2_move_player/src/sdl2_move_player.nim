@@ -42,10 +42,24 @@ proc quitGame(window: Option[WindowPtr], renderer: Option[RendererPtr],
 
   sdl2.quit()
 
+proc movePlayer(x, y: int, window: WindowPtr, playerSurface: SurfacePtr, playersPos: var Position): void =
+    window.setSurface
+
+    playersPos.x += x
+    playersPos.y += y
+
+    var
+      rect: Rect = (cint playersPos.x, cint playersPos.y,
+          playerSurface.w, playerSurface.h)
+      destRect = addr(rect)
+
+    # Update the surface with the players new position
+    playerSurface.blitSurface(nil, window.getSurface, destRect)
+
 # TODO: Is there a better way to set these parameters?
-proc handleEvents(event: var Event, playerSurface: var SurfacePtr,
-                   window: var WindowPtr, renderer: var RendererPtr,
-                       playing: var bool, playersPos: var Position): void =
+proc handleEvents(event: var Event, playerSurface: SurfacePtr,
+                   window: WindowPtr, renderer: RendererPtr,
+                       playing: var bool, playersPos: var Position, playerMoveSpeed: int): void =
 
   while event.pollEvent:
     case event.kind
@@ -58,18 +72,14 @@ proc handleEvents(event: var Event, playerSurface: var SurfacePtr,
           playing = false
 
         if scancode == SDL_SCANCODE_D:
-          window.setSurface
+          movePlayer(1 * playerMoveSpeed, 0, window, playerSurface, playersPos)
+        if scancode == SDL_SCANCODE_A:
+          movePlayer(-1 * playerMoveSpeed, 0, window, playerSurface, playersPos)
+        if scancode == SDL_SCANCODE_W:
+          movePlayer(0, -1 * playerMoveSpeed, window, playerSurface, playersPos)
+        if scancode == SDL_SCANCODE_S:
+          movePlayer(0, 1 * playerMoveSpeed, window, playerSurface, playersPos)
 
-          playersPos.x += 10
-          playersPos.y += 10
-
-          var
-            rect: Rect = (cint playersPos.x, cint playersPos.y,
-                playerSurface.w, playerSurface.h)
-            destRect = addr(rect)
-
-          # Update the surface with the players new position
-          playerSurface.blitSurface(nil, window.getSurface, destRect)
 
       of QuitEvent:
         quitGame(surface = option(playerSurface), window = option(window),
@@ -88,13 +98,14 @@ when isMainModule:
     playerSurface: SurfacePtr = nil
     event: Event
     playersPos: Position = (0, 0)
+    playerMoveSpeed: int = 20
 
   initGame(window, renderer)
 
   while playing:
     # Without a delay the cpu would be at 100% while the game is running.
     sdl2.delay(5)
-    handleEvents(event, playerSurface, window, renderer, playing, playersPos)
+    handleEvents(event, playerSurface, window, renderer, playing, playersPos, playerMoveSpeed)
 
     if playing:
       if isNil(playerSurface):
