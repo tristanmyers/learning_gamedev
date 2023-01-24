@@ -13,6 +13,12 @@ var
 
 proc logError(msg: string): void = stderr.writeLine(msg, sdl2.getError())
 
+proc setSurface(window: WindowPtr): void =
+  let screenSurface = window.getSurface
+  let surfaceFill = screenSurface.fillRect(nil, mapRGB(screenSurface.format,
+      green.r, green.g, green.b))
+  if surfaceFill == SdlError: logError("Error filling surface rect ")
+
 proc initGame(window: var WindowPtr, renderer: var RendererPtr): void =
   if sdl2.init(INIT_VIDEO) == SdlError:
     logError("Error intializing sdl2 ")
@@ -24,15 +30,7 @@ proc initGame(window: var WindowPtr, renderer: var RendererPtr): void =
   if isNil(window):
     logError("Error creating window ")
 
-  renderer = window.createRenderer(cint -1, Renderer_Accelerated)
-  if isNil(renderer): logError("Error creating renderer ")
-
-  # TODO: My surface color is broken
-  let screenSurface = window.getSurface
-  let surfaceFill = screenSurface.fillRect(nil, mapRGB(screenSurface.format,
-      green.r, green.g, green.b))
-  if surfaceFill == SdlError: logError("Error filling surface rect ")
-  if window.updateSurface == SdlError: logError("Error updating screen surface ")
+  window.setSurface
 
 # NOTE: Maybe window and renderer doesn't need to be passed through as params, they maybe me something like getWindow
 # I think having optional parameters is more appoproiate here than procedure overrides since there is not much logic difference
@@ -47,7 +45,7 @@ proc quitGame(window: Option[WindowPtr], renderer: Option[RendererPtr],
 # TODO: Is there a better way to set these parameters?
 proc handleEvents(event: var Event, playerSurface: var SurfacePtr,
                    window: var WindowPtr, renderer: var RendererPtr,
-                       playing: var bool, playersPrevPos: var Position): void =
+                       playing: var bool, playersPos: var Position): void =
 
   while event.pollEvent:
     case event.kind
@@ -60,11 +58,13 @@ proc handleEvents(event: var Event, playerSurface: var SurfacePtr,
           playing = false
 
         if scancode == SDL_SCANCODE_D:
-          playersPrevPos.x += 10
-          playersPrevPos.y += 10
+          window.setSurface
+
+          playersPos.x += 10
+          playersPos.y += 10
 
           var
-            rect: Rect = (cint playersPrevPos.x, cint playersPrevPos.y,
+            rect: Rect = (cint playersPos.x, cint playersPos.y,
                 playerSurface.w, playerSurface.h)
             destRect = addr(rect)
 
@@ -85,19 +85,16 @@ when isMainModule:
     playing = true
     window: WindowPtr = nil
     renderer: RendererPtr = nil
-    screenSurface: SurfacePtr = nil
     playerSurface: SurfacePtr = nil
     event: Event
-    playersPrevPos: Position = (0, 0)
+    playersPos: Position = (0, 0)
 
   initGame(window, renderer)
-  renderer.clear
 
   while playing:
     # Without a delay the cpu would be at 100% while the game is running.
     sdl2.delay(5)
-    # screenSurface.fillRect(nil, 0x000000)
-    handleEvents(event, playerSurface, window, renderer, playing, playersPrevPos)
+    handleEvents(event, playerSurface, window, renderer, playing, playersPos)
 
     if playing:
       if isNil(playerSurface):
@@ -106,7 +103,7 @@ when isMainModule:
         if isNil(playerSurface):
           logError("Error loading player image ")
         # Render image on to back buffer
-        playerSurface.blitSurface(nil, screenSurface, nil)
+        playerSurface.blitSurface(nil, window.getSurface, nil)
 
     # Update front buffer with back buffer
     if window.updateSurface == SdlError:
