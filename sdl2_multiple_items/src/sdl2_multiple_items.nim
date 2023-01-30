@@ -55,76 +55,66 @@ proc quitGame(window: Option[WindowPtr], renderer: Option[RendererPtr],
 
   sdl2.quit()
 
-proc movePlayer(x, y: int, window: WindowPtr, playerSurface: SurfacePtr,
-    playersPos: var Position): void =
-  # window.setSurface
+proc movePlayer(x, y: int, game: ref Game): void =
+  setSurface(game)
 
-  playersPos.x += x
-  playersPos.y += y
+  game.player.position.x += x
+  game.player.position.y += y
 
   var
-    rect: Rect = (cint playersPos.x, cint playersPos.y,
-        playerSurface.w, playerSurface.h)
+    rect: Rect = (cint game.player.position.x, cint game.player.position.y,
+        game.player.surface.w, game.player.surface.h)
     destRect = addr(rect)
 
   # Update the surface with the players new position
-  playerSurface.blitSurface(nil, window.getSurface, destRect)
+  blitSurface(game.player.surface, nil, getSurface(game.window), destRect)
 
 # TODO: Is there a better way to set these parameters?
-proc handleEvents(event: var Event, playerSurface: SurfacePtr,
-                   window: WindowPtr, renderer: RendererPtr,
-                       playing: var bool, playersPos: var Position,
-                           playerMoveSpeed: int): void =
-# proc handleEvents(game: ref Game): void =
+# proc handleEvents(event: var Event, playerSurface: SurfacePtr,
+#                    window: WindowPtr, renderer: RendererPtr,
+#                        playing: var bool, playersPos: var Position,
+#                            playerMoveSpeed: int): void =
+proc handleEvents(game: ref Game): void =
 
-  while event.pollEvent:
-    case event.kind
+  while game.event.pollEvent:
+    case game.event.kind
       of KeyDown:
-        let scancode = event.key.keysym.scancode
+        let scancode = game.event.key.keysym.scancode
 
         if scancode == SDL_SCANCODE_Q:
-          quitGame(surface = option(playerSurface), window = option(window),
-                          renderer = option(renderer))
-          playing = false
+          quitGame(surface = option(game.player.surface), window = option(game.window),
+                          renderer = option(game.renderer))
+          game.playing = false
 
         if scancode == SDL_SCANCODE_D:
-          movePlayer(1 * playerMoveSpeed, 0, window, playerSurface, playersPos)
+          movePlayer(1 * game.player.moveSpeed, 0, game)
         if scancode == SDL_SCANCODE_A:
-          movePlayer(-1 * playerMoveSpeed, 0, window, playerSurface, playersPos)
+          movePlayer(-1 * game.player.moveSpeed, 0, game)
         if scancode == SDL_SCANCODE_W:
-          movePlayer(0, -1 * playerMoveSpeed, window, playerSurface, playersPos)
+          movePlayer(0, -1 * game.player.moveSpeed, game)
         if scancode == SDL_SCANCODE_S:
-          movePlayer(0, 1 * playerMoveSpeed, window, playerSurface, playersPos)
+          movePlayer(0, 1 * game.player.moveSpeed, game)
 
 
       of QuitEvent:
-        quitGame(surface = option(playerSurface), window = option(window),
-                 renderer = option(renderer))
-        playing = false
+        quitGame(surface = option(game.player.surface), window = option(game.window),
+                 renderer = option(game.renderer))
+        game.playing = false
 
       else: discard
 
 when isMainModule:
   var
-    # playing = true
-    # window: WindowPtr = nil
-    # renderer: RendererPtr = nil
-    # playerSurface: SurfacePtr = nil
-    # playerMoveSpeed: int = 20
-    # event: Event
-    # playersPos: Position = (0, 0)
-
-    player: ref Player = new(Player)
     game: ref Game = new(Game)
-
-  player.surface = nil
-  player.position = (0, 0)
-  player.moveSpeed = 20
 
   game.window = nil
   game.renderer = nil
-  game.player = player
+  game.player = new(Player)
   game.playing = true
+
+  game.player.surface = nil
+  game.player.position = (0, 0)
+  game.player.moveSpeed = 20
 
   initGame(game)
 
@@ -134,14 +124,14 @@ when isMainModule:
     handleEvents(game)
 
     if game.playing:
-      var playerSurface = game.player.surface
-      if isNil(playerSurface):
+      # NOTE: This probably doesn't work
+      if isNil(game.player.surface):
         # NOTE: Executable needs to be ran from the directory that the image is in.
-        playerSurface = sdl2.loadBMP("./player1.bmp")
-        if isNil(playerSurface):
+        game.player.surface = sdl2.loadBMP("./player1.bmp")
+        if isNil(game.player.surface):
           logError("Error loading player image ")
         # Render image on to back buffer
-        playerSurface.blitSurface(nil, getSurface(game.window), nil)
+        blitSurface(game.player.surface, nil, getSurface(game.window), nil)
 
     # TODO: video subsystem isn't initializing?
     # Update front buffer with back buffer
