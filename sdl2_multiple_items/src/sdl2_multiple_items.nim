@@ -4,15 +4,18 @@ import std/options
 type
   Position = tuple[x, y: int]
 
-  Player = object
+  Entity = object of RootObj
     surface: SurfacePtr
     position: Position
+
+  Player = object of Entity
     moveSpeed: int
 
   Game = object
     window: WindowPtr
     renderer: RendererPtr
     player: ref Player
+    entity: ref Entity
     playing: bool
     event: Event
 
@@ -105,31 +108,41 @@ when isMainModule:
   game.window = nil
   game.renderer = nil
   game.player = new(Player)
+  game.entity = new(Entity)
   game.playing = true
 
   game.player.surface = nil
   game.player.position = (0, 0)
   game.player.moveSpeed = 20
 
+  game.entity.surface = nil
+  game.entity.position = (0, 10)
+
   initGame(game)
 
   while game.playing:
     # Without a delay the cpu would be at 100% while the game is running.
-    sdl2.delay(5)
+    delay(5)
     handleEvents(game)
 
     if game.playing:
-      # NOTE: This probably doesn't work
       if isNil(game.player.surface):
         # NOTE: Executable needs to be ran from the directory that the image is in.
-        game.player.surface = sdl2.loadBMP("./player1.bmp")
+        game.player.surface = loadBMP("./player1.bmp")
         if isNil(game.player.surface):
           logError("Error loading player image ")
         # Render image on to back buffer
         blitSurface(game.player.surface, nil, getSurface(game.window), nil)
 
-    # TODO: video subsystem isn't initializing?
-    # Update front buffer with back buffer
-    if updateSurface(game.window) == SdlError:
-      logError("Error updating surface ")
+
+      # TODO: Not showing up, maybe because of order of draw operations.
+      if isNil(game.entity.surface): 
+        game.entity.surface = loadBMP("./entity.bmp")
+        if isNil(game.entity.surface): 
+          logError("Error loading entiry image ")
+        blitSurface(game.entity.surface, nil, getSurface(game.window), nil)
+
+      # Update front buffer with back buffer
+      if updateSurface(game.window) == SdlError:
+          logError("Error updating surface ")
 
