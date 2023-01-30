@@ -69,11 +69,6 @@ proc movePlayer(x, y: int, game: ref Game): void =
   # Update the surface with the players new position
   blitSurface(game.player.surface, nil, getSurface(game.window), destRect)
 
-# TODO: Is there a better way to set these parameters?
-# proc handleEvents(event: var Event, playerSurface: SurfacePtr,
-#                    window: WindowPtr, renderer: RendererPtr,
-#                        playing: var bool, playersPos: var Position,
-#                            playerMoveSpeed: int): void =
 proc handleEvents(game: ref Game): void =
 
   while game.event.pollEvent:
