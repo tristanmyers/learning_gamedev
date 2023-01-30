@@ -41,9 +41,12 @@ Then blit the window surface with the new ``Rect`` that has the updated coordina
 
 Before all of this you will need to reset the screen surface so that the player at the old coordinates doesn't stay on the screen. 
 
+The surface can be set with ``fillRect``
+
 Then update the screen surfaces front buffer.
 
-> When does one worry about thread management?
+> How does the surface method of moving the player work with multiple items on the screen?
 
-> How do I manage threads?
-
+> How do I render text?
+ 
+> How do I render resource usage?
