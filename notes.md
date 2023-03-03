@@ -47,6 +47,8 @@ Then update the screen surfaces front buffer.
 
 > How does the surface method of moving the player work with multiple items on the screen?
 
+I could not render multiple things on to the surface, will revisit another time. See "sld2_multiple_items.nim"
+
 > How do I render text?
  
 > How do I render resource usage?

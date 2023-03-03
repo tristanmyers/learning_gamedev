@@ -40,7 +40,7 @@ proc initGame(game: ref Game): void =
     logError("Error intializing sdl2 ")
 
   # This is also creating a surface the same size as the window.
-  game.window = sdl2.createWindow(title = "Handling some events",
+  game.window = sdl2.createWindow(title = "Drawing some things",
       x = SDL_WINDOWPOS_CENTERED, y = SDL_WINDOWPOS_CENTERED, w = 800, h = 600,
       flags = SDL_WINDOW_SHOWN)
   if isNil(game.window):
@@ -59,7 +59,7 @@ proc quitGame(window: Option[WindowPtr], renderer: Option[RendererPtr],
   sdl2.quit()
 
 proc movePlayer(x, y: int, game: ref Game): void =
-  setSurface(game)
+  # setSurface(game)
 
   game.player.position.x += x
   game.player.position.y += y
@@ -73,7 +73,6 @@ proc movePlayer(x, y: int, game: ref Game): void =
   blitSurface(game.player.surface, nil, getSurface(game.window), destRect)
 
 proc handleEvents(game: ref Game): void =
-
   while game.event.pollEvent:
     case game.event.kind
       of KeyDown:
@@ -92,7 +91,6 @@ proc handleEvents(game: ref Game): void =
           movePlayer(0, -1 * game.player.moveSpeed, game)
         if scancode == SDL_SCANCODE_S:
           movePlayer(0, 1 * game.player.moveSpeed, game)
-
 
       of QuitEvent:
         quitGame(surface = option(game.player.surface), window = option(game.window),
@@ -116,7 +114,7 @@ when isMainModule:
   game.player.moveSpeed = 20
 
   game.entity.surface = nil
-  game.entity.position = (0, 10)
+  game.entity.position = (0, 200)
 
   initGame(game)
 
@@ -127,22 +125,20 @@ when isMainModule:
 
     if game.playing:
       if isNil(game.player.surface):
-        # NOTE: Executable needs to be ran from the directory that the image is in.
+        # NOTE: Executable needs to be ran from the directory that the image is in because of this line.
         game.player.surface = loadBMP("./player1.bmp")
         if isNil(game.player.surface):
           logError("Error loading player image ")
         # Render image on to back buffer
         blitSurface(game.player.surface, nil, getSurface(game.window), nil)
 
-
-      # TODO: Not showing up, maybe because of order of draw operations.
       if isNil(game.entity.surface): 
         game.entity.surface = loadBMP("./entity.bmp")
         if isNil(game.entity.surface): 
-          logError("Error loading entiry image ")
+          logError("Error loading entity image ")
         blitSurface(game.entity.surface, nil, getSurface(game.window), nil)
 
       # Update front buffer with back buffer
       if updateSurface(game.window) == SdlError:
-          logError("Error updating surface ")
+          logError("Error updating window surface ")
 
